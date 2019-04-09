@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:note_app/utils/database_helper.dart';
+import 'package:note_app/model/Note.dart';
+import 'package:intl/intl.dart';
 
 class NoteDetail extends StatefulWidget {
   String appBarTitle;
-  NoteDetail(this.appBarTitle);
+  final Note note;
+
+  NoteDetail(this.note, this.appBarTitle);
+
   @override
-  NoteDetailState createState() => NoteDetailState(this.appBarTitle);
+  NoteDetailState createState() => NoteDetailState(this.note, this.appBarTitle);
 }
 
 class NoteDetailState extends State<NoteDetail> {
   var priorities = ['High', 'Low'];
+
+  DatabaseHelper helper = DatabaseHelper();
+
   TextEditingController titleController = TextEditingController();
   TextEditingController descController = TextEditingController();
   String appBarTitle;
-  NoteDetailState(this.appBarTitle);
+  Note note;
+
+  NoteDetailState(this.note, this.appBarTitle);
+
   @override
   Widget build(BuildContext context) {
     TextStyle textstyle = Theme.of(context).textTheme.title;
+    titleController.text = note.title;
+    descController.text = note.desc;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(appBarTitle),
@@ -33,10 +49,11 @@ class NoteDetailState extends State<NoteDetail> {
                     );
                   }).toList(),
                   style: textstyle,
-                  value: 'Low',
+                  value: getPriorityAsString(note.priority),
                   onChanged: (valueSelectedByUser) {
                     setState(() {
                       debugPrint("User Selected $valueSelectedByUser");
+                      updatePriorityAsInt(valueSelectedByUser);
                     });
                   }),
             ),
@@ -48,6 +65,7 @@ class NoteDetailState extends State<NoteDetail> {
               style: textstyle,
               onChanged: (value) {
                 debugPrint("Something in the textfield");
+                updateTitle();
               },
               decoration: InputDecoration(
                 labelText: 'Title',
@@ -65,6 +83,7 @@ class NoteDetailState extends State<NoteDetail> {
               style: textstyle,
               onChanged: (value) {
                 debugPrint("Something in the textfield");
+                updateDesc();
               },
               decoration: InputDecoration(
                 labelText: 'Description',
@@ -91,11 +110,14 @@ class NoteDetailState extends State<NoteDetail> {
                     onPressed: () {
                       setState(() {
                         debugPrint("Save Clicked");
+                        _save();
                       });
                     },
                   ),
                 ),
-                Container(width: 5,),
+                Container(
+                  width: 5,
+                ),
                 Expanded(
                   child: RaisedButton(
                     elevation: 2,
@@ -108,6 +130,7 @@ class NoteDetailState extends State<NoteDetail> {
                     onPressed: () {
                       setState(() {
                         debugPrint("Delete Clicked");
+                        _delete();
                       });
                     },
                   ),
@@ -118,5 +141,75 @@ class NoteDetailState extends State<NoteDetail> {
         ],
       ),
     );
+  }
+
+  void updatePriorityAsInt(String value) {
+    switch (value) {
+      case 'High':
+        note.priority = 1;
+        break;
+      case 'Low':
+        note.priority = 2;
+        break;
+    }
+  }
+
+  String getPriorityAsString(int value) {
+    String priority;
+    switch (value) {
+      case 1:
+        priority = priorities[0];
+        break;
+      case 2:
+        priority = priorities[1];
+        break;
+    }
+    return priority;
+  }
+
+  void updateTitle() {
+    note.title = titleController.text;
+  }
+
+  void updateDesc() {
+    note.desc = descController.text;
+  }
+
+  void _save() async {
+    var result;
+    Navigator.pop(context, true);
+    note.date = DateFormat.yMMMd().format(DateTime.now());
+    if (note.id != null) {
+      result = await helper.updateNote(note);
+    } else {
+      result = await helper.insertNote(note);
+    }
+
+    if (result != 0) {
+      _showAlertDialog('Status', 'Note Saved Successfully');
+    } else {
+      _showAlertDialog('Status', 'Problem Saving Note');
+    }
+  }
+
+  void _delete() async {
+    Navigator.pop(context, true);
+    if (note.id == null) {
+      _showAlertDialog('Status', 'No Note was Deleted');
+    }
+    int result = await helper.deletNote(note.id);
+    if (result != 0) {
+      _showAlertDialog('Status', 'Note deleted Successfully');
+    } else {
+      _showAlertDialog('Status', 'Some Error Occured');
+    }
+  }
+
+  void _showAlertDialog(String title, String message) {
+    AlertDialog alertDialog = AlertDialog(
+      title: Text(title),
+      content: Text(message),
+    );
+    showDialog(context: context, builder: (_) => alertDialog);
   }
 }
