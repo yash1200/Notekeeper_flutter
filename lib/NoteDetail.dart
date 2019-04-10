@@ -169,22 +169,28 @@ class NoteDetailState extends State<NoteDetail> {
 
   void updateTitle() {
     note.title = titleController.text;
+    print(titleController.text);
   }
 
   void updateDesc() {
     note.desc = descController.text;
+    print(titleController.text);
   }
 
   void _save() async {
-    var result;
+    int result;
     Navigator.pop(context, true);
     note.date = DateFormat.yMMMd().format(DateTime.now());
+    print(note.id);
+    print(note.date);
+    print(note.title);
+    print(note.desc);
+    print(note.priority);
     if (note.id != null) {
       result = await helper.updateNote(note);
     } else {
       result = await helper.insertNote(note);
     }
-
     if (result != 0) {
       _showAlertDialog('Status', 'Note Saved Successfully');
     } else {

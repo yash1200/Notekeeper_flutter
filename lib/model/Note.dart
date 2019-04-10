@@ -8,6 +8,7 @@ class Note {
 
   int get id => _id;
 
+
   String get title => _title;
 
   String get desc => _desc;
@@ -41,13 +42,14 @@ class Note {
   Map<String, dynamic> toMap() {
     var map = Map<String, dynamic>();
     if (id != null) {
-      map['id'] = _id;
+      map['id'] = this._id;
     }
-    map['title'] = _title;
-    map['desc'] = _desc;
-    map['date'] = _date;
-    map['priority'] = _priority;
-  }
+    map['title'] = this._title;
+    map['desc'] = this._desc;
+    map['date'] = this._date;
+    map['priority'] = this._priority;
+    return map;
+}
 
   Note.fromMapObject(Map<String, dynamic> map) {
     this._id = map['id'];
